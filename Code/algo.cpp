@@ -44,13 +44,13 @@ std::vector<Block*> vorace(std::vector<Block*> sortedBlocks){
     stackedBlocks.push_back(*it++);
 
     // Iterate over all the sorted blocks
+    // O(n)
     while(it != sortedBlocks.end()){
         // If the block fits over the previous one
         if((*it)->CanFit(*(stackedBlocks.end()-1))){
             double p = (*it)->hauteur/((*it)->largeur * (*it)->profondeur);
             if(p < distro(gen)){
                 stackedBlocks.push_back(*it);
-                it = sortedBlocks.begin();
             }
         }
         it++;
@@ -127,6 +127,7 @@ std::vector<Block*> tabou(std::vector<Block*> sorted){
 
     stackedBlocks.push_back(*it++);
 
+    // O(n)
     while(it != sorted.end()){
         if((*it)->CanFit(stackedBlocks.back())){
             stackedBlocks.push_back(*it);
@@ -135,9 +136,11 @@ std::vector<Block*> tabou(std::vector<Block*> sorted){
         it++;
     }
 
-    // // Tabu algorithm
+    // Tabu algorithm
+    // O(nlogn)
     std::sort(sorted.begin(), sorted.end(), [](Block* a, Block* b){return a->hauteur > b->hauteur;});
 
+    // Inverted so that we can iterate from top to bottom
     std::reverse(stackedBlocks.begin(), stackedBlocks.end());
 
     std::random_device rd;  
