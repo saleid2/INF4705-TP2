@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <chrono>
 #include <ctime>
+#include <random>
 
 class Block
 {
@@ -23,15 +24,19 @@ class Block
     int hauteur;
     int largeur;
     int profondeur;
+    int tabouIterationsLeft = 0;
 
     bool CanFit(Block* previous){
-        return (this->largeur <= previous->largeur) && (this->profondeur <= previous->profondeur);
+        return (this->largeur < previous->largeur) && (this->profondeur < previous->profondeur);
     }
 };
 
 // This is part of the glouton we're supposed to implement
 std::vector<Block*> vorace(std::vector<Block*> sortedBlocks){
     std::vector<Block*> stackedBlocks;
+
+    std::default_random_engine gen;
+    std::uniform_real_distribution<double> distro(0.0,1.0);
 
     auto it = sortedBlocks.begin();
 
@@ -42,8 +47,11 @@ std::vector<Block*> vorace(std::vector<Block*> sortedBlocks){
     while(it != sortedBlocks.end()){
         // If the block fits over the previous one
         if((*it)->CanFit(*(stackedBlocks.end()-1))){
-            // Stack it
-            stackedBlocks.push_back(*it);
+            double p = (*it)->hauteur/((*it)->largeur * (*it)->profondeur);
+            if(p < distro(gen)){
+                stackedBlocks.push_back(*it);
+                it = sortedBlocks.begin();
+            }
         }
         it++;
     }
@@ -107,6 +115,90 @@ std::vector<Block*> progDyn(std::vector<Block*> sorted){
     return resultStack;
 }
 
+std::vector<Block*> tabou(std::vector<Block*> sorted){
+    const int MaxIterations = 100;
+    int currentIterationWithSolution = 0;
+
+    std::vector<Block*> stackedBlocks;
+    int stackedBlocksHeight = 0;
+
+    // Initial solution with greedy algorithm
+    auto it = sorted.begin();
+
+    stackedBlocks.push_back(*it++);
+
+    while(it != sorted.end()){
+        if((*it)->CanFit(stackedBlocks.back())){
+            stackedBlocks.push_back(*it);
+            stackedBlocksHeight += (*it)->hauteur;
+        }
+        it++;
+    }
+
+    // // Tabu algorithm
+    std::sort(sorted.begin(), sorted.end(), [](Block* a, Block* b){return a->hauteur > b->hauteur;});
+
+    std::reverse(stackedBlocks.begin(), stackedBlocks.end());
+
+    std::random_device rd;  
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<> dis(7, 10);
+
+    while(currentIterationWithSolution < 100){
+        // We're gonna start seeing what can be replaced from top to bottom
+        std::vector<Block*> tempSolution(stackedBlocks);
+        int tabuHeight = stackedBlocksHeight;
+
+        // Iterates over the blocks that can be inserted
+        for(auto tit = sorted.begin(); tit != sorted.end(); tit++){
+
+            // Iterate over the currently stacked blocks from top to bottom
+            for(int j = tempSolution.size() - 1; j >= 0; j--){
+
+                // If the block that we want to insert is not in the tabu list
+                if((*tit)->tabouIterationsLeft-- < 1){
+                    // If the block can fit on the previous block
+                    if((*tit)->CanFit(tempSolution[j])){
+                        // If the insertion position is not the top of the stack
+                        if(j != (tempSolution.size() - 1)){
+                            // If the items higher than the insertion position can fit on block we want to insert
+                            if(tempSolution[j+1]->CanFit(*tit)){
+                                auto tempTit = tempSolution.begin() + j + 1;
+                                tempSolution.insert(tempTit, *tit);
+                                tabuHeight += (*tit)->hauteur;
+                            }
+                            else{
+                                while(tempSolution.size() > j){
+                                    auto tabuBlock = tempSolution.back();
+                                    tempSolution.pop_back();
+                                    tabuHeight -= tabuBlock->hauteur;
+                                    tabuBlock->tabouIterationsLeft = dis(gen);
+                                }
+                                tempSolution.push_back(*tit);
+                                tabuHeight += (*tit)->hauteur;
+                            }
+                        }
+                        else{
+                            tempSolution.push_back(*tit);
+                            tabuHeight += (*tit)->hauteur;
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+
+        if(tabuHeight > stackedBlocksHeight){
+            stackedBlocks = std::vector<Block*>(tempSolution);
+            currentIterationWithSolution = 0;
+        }
+        else{
+            currentIterationWithSolution++;
+        }
+    }
+    
+    return stackedBlocks;
+}
 
 int main(int argc, char *argv[]) {
     struct {
@@ -148,13 +240,15 @@ int main(int argc, char *argv[]) {
     auto start = std::chrono::high_resolution_clock::now();
 
     // Pick algorithm
-    if (prog_args.algo == "vorace")
+    if (prog_args.algo == "vorace"){
         stackedBlocks = vorace(blocks);
+    }
     else if(prog_args.algo == "progdyn"){
         stackedBlocks = progDyn(blocks);
     }
-	else if(prog_args.algo == "tabou")
-		return 0;
+	else if(prog_args.algo == "tabou"){
+        stackedBlocks = tabou(blocks);
+    }
 
 
     auto end = std::chrono::high_resolution_clock::now();
