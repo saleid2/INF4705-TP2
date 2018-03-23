@@ -268,37 +268,3 @@ int main(int argc, char *argv[]) {
 
     return 0;
 }
-
-
-/*
-
-Block are object : H,L,P.
-
-
-VORACE:
-
-Sort list by surface (LxP) en ordre décroissant
-while list isn't empty
-	x <- choose(list)
-
-	
-choose(list):
-	Parcourre la liste, si la taille est plus petite (strictement) que le bloc prédédant, try to add.
-	Try to add => Probabilité p = H/(LxP)
-
-	
-	
-	
-DYNAMIQUE:
-
-Sort list by surface (LxP) en ordre décroissant
-
-Choisir la plus grande surface (first one).
-
-Ajouter le prochain block qui a la plus grande surface ET qui entre sur le block précédant.
-
-
-
-
-TABOU:
-*/
