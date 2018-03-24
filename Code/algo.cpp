@@ -35,7 +35,8 @@ class Block
 std::vector<Block*> vorace(std::vector<Block*> sortedBlocks){
     std::vector<Block*> stackedBlocks;
 
-    std::default_random_engine gen;
+    std::random_device rd;
+    std::default_random_engine gen(rd());
     std::uniform_real_distribution<double> distro(0.0,1.0);
 
     auto it = sortedBlocks.begin();
@@ -48,7 +49,7 @@ std::vector<Block*> vorace(std::vector<Block*> sortedBlocks){
     while(it != sortedBlocks.end()){
         // If the block fits over the previous one
         if((*it)->CanFit(*(stackedBlocks.end()-1))){
-            double p = (*it)->hauteur/((*it)->largeur * (*it)->profondeur);
+            double p = (double)(*it)->hauteur/((*it)->largeur * (*it)->profondeur);
             // If the randomly generated number is bigger than the probability of being picked
             if(p < distro(gen)){
                 // Add the block to the pile
