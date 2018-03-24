@@ -49,7 +49,9 @@ std::vector<Block*> vorace(std::vector<Block*> sortedBlocks){
         // If the block fits over the previous one
         if((*it)->CanFit(*(stackedBlocks.end()-1))){
             double p = (*it)->hauteur/((*it)->largeur * (*it)->profondeur);
+            // If the randomly generated number is bigger than the probability of being picked
             if(p < distro(gen)){
+                // Add the block to the pile
                 stackedBlocks.push_back(*it);
             }
         }
