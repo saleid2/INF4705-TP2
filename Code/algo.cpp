@@ -262,9 +262,15 @@ int main(int argc, char *argv[]) {
         for(auto it = stackedBlocks.begin(); it != stackedBlocks.end(); it++)
             std::cout << std::setw(10) << std::left << (*it)->hauteur << std::setw(10) << std::left << (*it)->largeur << std::setw(10) << std::left << (*it)->profondeur << std::endl;
 
+    int height = 0;
+
+    for(auto it = stackedBlocks.begin(); it != stackedBlocks.end(); it++)
+        height += (*it)->hauteur;
+
     // Output time in ms
     if(prog_args.print_time)
-        std::cout << elapsed_s.count()*1000 << std::endl;
+        std::cout << elapsed_s.count()*1000 << "," << height << std::endl;
+
 
     return 0;
 }
